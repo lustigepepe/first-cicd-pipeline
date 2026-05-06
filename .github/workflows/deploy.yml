@@ -1,0 +1,26 @@
+name: Deploy to EC2
+on:
+  push:
+    tags:
+      - "v*"
+jobs:
+  deploy:
+    name: SSH Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set version from tag
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          echo "Deploying version: $TAG"
+          echo "$TAG" > app/version.txt
+      - name: Copy files to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "app/"
+          target: "~/cicd-app"
+          strip_components: 1
